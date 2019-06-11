@@ -37,6 +37,10 @@ func (channel *ChatChannel) join(user *ChatClient) {
 }
 
 func (channel *ChatChannel) part(user *ChatClient) {
+	// Change channel.users to be a map from username to ChatClient
+	// (or even ChatConnection to allow two users with the same username)
+	// and this becomes way more efficient (you won't have to do the slicing
+	// to remove the user) and a lot simpler
 	for index := 0; index < len(channel.users); index++ {
 		if channel.users[index] == user {
 			channel.users = append(channel.users[:index], channel.users[index+1:]...)

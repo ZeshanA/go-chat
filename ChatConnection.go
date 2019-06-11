@@ -9,7 +9,7 @@ import (
 
 // ChatConnection : A wrapper for net.TCPConn to provide chat convencience methods
 type ChatConnection struct {
-	*net.TCPConn
+	net.Conn
 	server *ChatServer
 }
 
@@ -26,5 +26,6 @@ func (connection *ChatConnection) receive() *string {
 }
 
 func (connection *ChatConnection) send(what string) {
+	// Unhandled error here, add a few lines to log the error if one occurs during write
 	connection.Write([]byte(what + "\n"))
 }

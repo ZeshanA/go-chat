@@ -31,6 +31,8 @@ func logToFile(message string, username string) {
 	fileName := fmt.Sprintf("%s/go-chat-%s.log", logDir, username)
 	f, err := os.OpenFile(fileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 	if err != nil {
+		// Using log.Panic, log.Panicln, log.Panicf etc. instead of just panic(err)
+		// is free and prints useful information like the date/time that the panic occurred
 		panic(err)
 	}
 
@@ -59,6 +61,26 @@ func (user *ChatClient) receive() {
 		message := *user.connection.receive()
 		parts := strings.Split(message, " ")
 		methodName := strings.Title(parts[0][1:])
+
+		// Try to avoid using reflection if possible, it's very, very slow and you lose
+		// type safety. I think in this case you could use a map of method name to functions
+		// instead:
+		//
+		// methods := map[string]func(string){
+		//   "Join": user.Join,
+		// }
+		// methodName := "Join"
+		// methods[methodName]("myChannel")
+		//
+		// You'd have to modify the methods of User to all have the same signature
+		// but they're pretty close as-is. Would probably have to make them all take a string
+		// parameter (because user.Join does), and then you could ignore the param in functions that don't
+		// need it. Not a perfect solution either, I agree.
+		//
+		// I completely see the appeal of using reflect and interface{} coming from a JS
+		// background; I don't think it should be the first you way you try to solve a problem in Go,
+		// but of course, sometimes the benefit is worth the performance degradation/loss of type safety,
+		// which is up to you to determine.
 		method := reflect.ValueOf(user).MethodByName(methodName)
 		zero := reflect.Value{}
 
@@ -97,9 +119,12 @@ func (user *ChatClient) Join(name string) {
 
 // List : Lists all available channels
 func (user *ChatClient) List() {
+	// Maybe use a more descriptive variable name than 'what' ;)
 	what := "Active Channels:\n"
 	channels := user.connection.server.channels
 
+	// Using += allocates a new string in memory everytime you use it,
+	// consider using a StringBuilder: https://www.calhoun.io/concatenating-and-building-strings-in-go/
 	if len(channels) == 0 {
 		what += "  Aww, there aren't any channels. Create one with /join"
 	} else {
@@ -125,6 +150,8 @@ func (user *ChatClient) Part() {
 
 // Quit : Disconnects from the chat server
 func (user *ChatClient) Quit() {
+	// You never need to cast nil to a different pointer type before doing a comparison,
+	// you can just do: if user.channel != nil
 	if user.channel != (*ChatChannel)(nil) {
 		user.Part()
 	}

@@ -22,6 +22,11 @@ func (server *ChatServer) createChannel(name string, user *ChatClient) *ChatChan
 	return &channel
 }
 
+// This is an O(n) pass over all channels and required you to write a
+// function to find a specific channel by name - just use a map! Change
+// the list of channels inside ChatServer to be a map[string]*ChatChannel
+// (basically { name: chatChannelObj }) so you can get a specific channel
+// by name in O(1) in one line of code (and so you can delete this function)
 func (server *ChatServer) findChannel(name string) *ChatChannel {
 	for _, channel := range server.channels {
 		if channel.name == name {
